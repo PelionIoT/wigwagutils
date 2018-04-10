@@ -1,0 +1,7 @@
+[
+  {
+    "name":"Login",
+    "api":"/api/oauth/access_token",
+    "request":"GET"
+  }
+]
