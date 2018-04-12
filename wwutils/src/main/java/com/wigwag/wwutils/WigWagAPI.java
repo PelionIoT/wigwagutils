@@ -3,7 +3,9 @@ package com.wigwag.wwutils;
 import android.content.Context;
 import android.os.AsyncTask;
 import android.util.Log;
+import android.widget.Toast;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -23,33 +25,56 @@ import static android.content.ContentValues.TAG;
 
 public class WigWagAPI {
 
+
+    private final String TAG = getClass().getSimpleName();
+
     private static WigWagAPI wigWagAPI;
-
-    private Response.WWListener<String> wwListener;
-    private Response.WWErrorListener wwErrorListener;
-
-    private Context context;
+    private static Context mContext;
+    private static Response.WWListener<String> listener;
+    private static Response.WWErrorListener errorListener;
     public  WigWagAPI(Context context){
-        this.context = context;
+        mContext = context;
     }
 
-    public static WigWagAPI getInstance(Context context) {
+    public static WigWagAPI getInstance(Context context,Response.WWListener<String> wwListener,Response.WWErrorListener wwErrorListener) {
         if (wigWagAPI == null)
-            wigWagAPI = new WigWagAPI(context.getApplicationContext());
+            wigWagAPI = new WigWagAPI(context);
+            listener = wwListener;
+            errorListener = wwErrorListener;
 
         return wigWagAPI;
     }
-    public void doLogin(final Response.WWListener<String> listener, final Response.WWErrorListener wwErrorListener){
-        String url = "http://ui2n.com/test2.php";
-        wwListener = listener;
-        this.wwErrorListener = wwErrorListener;
-        new OkHttpAync().execute();
+
+
+    public void doLogin(String grantType,String username,String password){
+        new OkHttpAync(APIContants.LOGIN,getObject(
+                com.wigwag.wwutils.Request.Login.ObjectKeys,
+                grantType,
+                username,
+                password)
+        ).execute();
+    }
+
+
+    public void listSites(String limit,String last){
+
     }
 
 
 
+    private void requestBuilder(int requestType){
+
+    }
+
     class OkHttpAync extends AsyncTask<Void, Void, Object> {
         private String TAG = this.getClass().getSimpleName();
+        private String API_URL;
+        private JSONObject jsonObject;
+
+        public OkHttpAync(String url,JSONObject jsonObject) {
+            this.jsonObject = jsonObject;
+            API_URL = url;
+        }
 
         @Override
         protected void onPreExecute() {
@@ -58,7 +83,7 @@ public class WigWagAPI {
 
         @Override
         protected Object doInBackground(Void... voids) {
-            return getHttpResponse();
+            return getHttpResponse(API_URL,jsonObject);
         }
 
         @Override
@@ -66,33 +91,37 @@ public class WigWagAPI {
             super.onPostExecute(result);
             if (result != null) {
                 //updateRow(result);
-                wwListener.onWWResponse(result.toString());
+                listener.onWWResponse(result.toString());
             }else{
-                wwErrorListener.onWWErrorResponse();
+                errorListener.onWWErrorResponse();
                 //onRefresh();
             }
         }
     }
 
+    private JSONObject getObject(String[] keys,String... args){
+        JSONObject jsonObject = new JSONObject();
+        for(int i=0;i<args.length;i++){
+            try {
+                jsonObject.put(keys[i],args[i]);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+        return jsonObject;
+    }
 
 
 
-    public Object getHttpResponse() {
+    private Object getHttpResponse(String url,JSONObject requestObject) {
+        Log.e(TAG,requestObject.toString());
         OkHttpClient httpClient = new OkHttpClient();
 
-        JSONObject commentObject = null;
-        try {
-            commentObject = new JSONObject().put("dfsdfs","fsdfsfsd");
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-
-
         MediaType CONTENT_TYPE_JSON = MediaType.parse("application/json; charset=utf-8");
-        String url = "http://ui2n.com/test2.php";
-        RequestBody requestBody = RequestBody.create(CONTENT_TYPE_JSON,commentObject.toString());
+        RequestBody requestBody = RequestBody.create(CONTENT_TYPE_JSON,requestObject.toString());
 
         okhttp3.Request request = new okhttp3.Request.Builder()
+                .addHeader("Authorization","Bearer "+Database.getInstance(mContext).getStorage(StorageMethods.Type.ACCESS_TOKEN))
                 .url(url)
                 .post(requestBody)
                 .build();

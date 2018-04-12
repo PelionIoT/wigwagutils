@@ -6,7 +6,9 @@ import android.os.Bundle;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.wigwag.wwutils.Database;
 import com.wigwag.wwutils.Response;
+import com.wigwag.wwutils.StorageMethods;
 import com.wigwag.wwutils.WigWagAPI;
 
 import org.json.JSONObject;
@@ -24,8 +26,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-
-        WigWagAPI.getInstance(getApplicationContext()).doLogin(new Response.WWListener<String>() {
+        WigWagAPI.getInstance(this,new Response.WWListener<String>() {
             @Override
             public void onWWResponse(final String response) {
                 runOnUiThread(new Runnable() {
@@ -38,9 +39,9 @@ public class MainActivity extends AppCompatActivity {
         }, new Response.WWErrorListener() {
             @Override
             public void onWWErrorResponse() {
-
+                Toast.makeText(MainActivity.this, "Hey", Toast.LENGTH_SHORT).show();
             }
-        });
-
+        }).doLogin("password","ygoyal+wwdev1@wigwag.com","yash123");
+        
     }
 }

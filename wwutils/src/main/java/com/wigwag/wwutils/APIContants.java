@@ -1,13 +1,8 @@
 package com.wigwag.wwutils;
 
+
 public class APIContants {
 
-    public static final String LOGIN = "/api/oauth/access_token";
-
-    
-    
-    
-    
-    //GET API's
-    public static final String SITE = "/sites";
+    public static final String LOGIN = "https://devcloud.wigwag.io/api/oauth/access_token";
+    public static final String KEY_STORAGE_NAME = "WWSTORAGE";
 }
