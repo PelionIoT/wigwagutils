@@ -1,11 +1,16 @@
 package com.wigwag.wwutils;
 
 import android.content.Context;
-import android.os.AsyncTask;
 import android.util.Log;
-import android.widget.Toast;
 
-import org.json.JSONArray;
+import com.wigwag.wwutils.Database.APIContants;
+import com.wigwag.wwutils.Database.Database;
+import com.wigwag.wwutils.ErrorManager.WigWagError;
+import com.wigwag.wwutils.Interface.HttpStatus;
+import com.wigwag.wwutils.Interface.StorageMethods;
+import com.wigwag.wwutils.ResponseManager.NetworkResponse;
+import com.wigwag.wwutils.ResponseManager.Response;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -16,7 +21,9 @@ import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.RequestBody;
 
-import static android.content.ContentValues.TAG;
+import static com.wigwag.wwutils.Interface.HttpStatus.WW_INTERNAL_SERVER_ERROR;
+import static com.wigwag.wwutils.Interface.HttpStatus.WW_NO_CLOUD;
+import static com.wigwag.wwutils.Interface.HttpStatus.WW_OK;
 
 
 /**
@@ -30,7 +37,8 @@ public class WigWagAPI {
 
     private static WigWagAPI wigWagAPI;
     private static Context mContext;
-    private static Response.WWListener<String> listener;
+    private String CLOUD_ADDRESS = null;
+    private static Response.WWListener<String> successListener;
     private static Response.WWErrorListener errorListener;
     public  WigWagAPI(Context context){
         mContext = context;
@@ -39,7 +47,7 @@ public class WigWagAPI {
     public static WigWagAPI getInstance(Context context,Response.WWListener<String> wwListener,Response.WWErrorListener wwErrorListener) {
         if (wigWagAPI == null)
             wigWagAPI = new WigWagAPI(context);
-            listener = wwListener;
+            successListener = wwListener;
             errorListener = wwErrorListener;
 
         return wigWagAPI;
@@ -47,56 +55,21 @@ public class WigWagAPI {
 
 
     public void doLogin(String grantType,String username,String password){
-        new OkHttpAync(APIContants.LOGIN,getObject(
-                com.wigwag.wwutils.Request.Login.ObjectKeys,
-                grantType,
-                username,
-                password)
-        ).execute();
+        getHttpResponse(Request.Login.API_URL,Request.Login.requestMethod,getObject(Request.Login.ObjectKeys, grantType, username, password));
     }
 
 
-    public void listSites(String limit,String last){
+    public void listSites(long limit,long last){
 
     }
 
+    public void getAccounts(long limit,long last){
+        getHttpResponse(APIContants.ACCOUNT,Request.Accounts.requestMethod,getObject(Request.Accounts.ObjectKeys));
+    }
 
 
     private void requestBuilder(int requestType){
 
-    }
-
-    class OkHttpAync extends AsyncTask<Void, Void, Object> {
-        private String TAG = this.getClass().getSimpleName();
-        private String API_URL;
-        private JSONObject jsonObject;
-
-        public OkHttpAync(String url,JSONObject jsonObject) {
-            this.jsonObject = jsonObject;
-            API_URL = url;
-        }
-
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-        }
-
-        @Override
-        protected Object doInBackground(Void... voids) {
-            return getHttpResponse(API_URL,jsonObject);
-        }
-
-        @Override
-        protected void onPostExecute(Object result) {
-            super.onPostExecute(result);
-            if (result != null) {
-                //updateRow(result);
-                listener.onWWResponse(result.toString());
-            }else{
-                errorListener.onWWErrorResponse();
-                //onRefresh();
-            }
-        }
     }
 
     private JSONObject getObject(String[] keys,String... args){
@@ -112,27 +85,40 @@ public class WigWagAPI {
     }
 
 
+    private void getHttpResponse(String url,String method,JSONObject requestObject) {
+        CLOUD_ADDRESS = Database.getInstance(mContext).getStorage(StorageMethods.Type.DCS);
+        if(CLOUD_ADDRESS!=null){
+            final String baseURL = CLOUD_ADDRESS+url;
+            MediaType CONTENT_TYPE_JSON = MediaType.parse("application/json; charset=utf-8");
+            RequestBody requestBody = RequestBody.create(CONTENT_TYPE_JSON,requestObject.toString());
 
-    private Object getHttpResponse(String url,JSONObject requestObject) {
-        Log.e(TAG,requestObject.toString());
-        OkHttpClient httpClient = new OkHttpClient();
+            okhttp3.Request request = new okhttp3.Request.Builder()
+                    .addHeader("Authorization","Bearer "+Database.getInstance(mContext).getStorage(StorageMethods.Type.ACCESS_TOKEN))
+                    .post(requestBody)
+                    .url(baseURL)
+                    .build();
 
-        MediaType CONTENT_TYPE_JSON = MediaType.parse("application/json; charset=utf-8");
-        RequestBody requestBody = RequestBody.create(CONTENT_TYPE_JSON,requestObject.toString());
+            OkHttpClient client = new OkHttpClient();
+            client.newCall(request).enqueue(new Callback() {
+                @Override
+                public void onFailure(Call call, IOException e) {
+                    errorListener.onWWErrorResponse(new WigWagError(WW_INTERNAL_SERVER_ERROR,e.toString()));
+                }
 
-        okhttp3.Request request = new okhttp3.Request.Builder()
-                .addHeader("Authorization","Bearer "+Database.getInstance(mContext).getStorage(StorageMethods.Type.ACCESS_TOKEN))
-                .url(url)
-                .post(requestBody)
-                .build();
+                @Override
+                public void onResponse(Call call, final okhttp3.Response response) throws IOException {
+                    if (response.isSuccessful()){
+                        successListener.onWWResponse(response.body().string());
+                    }else{
+                        Log.e(TAG,"Loading URL : "+baseURL);
+                        errorListener.onWWErrorResponse(new WigWagError(response.code(),response.message()));
+                    }
 
-        okhttp3.Response response = null;
-        try {
-            response = httpClient.newCall(request).execute();
-            return response.body().string();
-        } catch (IOException e) {
-            Log.e(TAG, "error in getting response get request okhttp");
+                }
+            });
+        }else{
+            errorListener.onWWErrorResponse(new WigWagError(WW_NO_CLOUD,"No Cloud Selected"));
         }
-        return null;
+
     }
 }

@@ -1,23 +1,16 @@
 package com.wigwag.wigwaglibrary;
 
-import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.Log;
 import android.widget.Toast;
 
-import com.wigwag.wwutils.Database;
-import com.wigwag.wwutils.Response;
-import com.wigwag.wwutils.StorageMethods;
+import com.wigwag.wwutils.Database.Database;
+import com.wigwag.wwutils.ErrorManager.WigWagError;
+import com.wigwag.wwutils.ResponseManager.Response;
 import com.wigwag.wwutils.WigWagAPI;
 
+import org.json.JSONException;
 import org.json.JSONObject;
-
-import java.io.IOException;
-
-import okhttp3.MediaType;
-import okhttp3.OkHttpClient;
-import okhttp3.RequestBody;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -26,22 +19,38 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        WigWagAPI.getInstance(this,new Response.WWListener<String>() {
+        Database.getInstance(this).setDCS("https://devcloud.wigwag.io");
+        WigWagAPI.getInstance(this, new Response.WWListener<String>() {
             @Override
             public void onWWResponse(final String response) {
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        Toast.makeText(MainActivity.this, response, Toast.LENGTH_SHORT).show();
-                    }
-                });
+
+                try {
+                    Database.getInstance(getApplicationContext()).setAccessToken(new JSONObject(response).getString("access_token"));
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+                showMessage(response);
+
             }
         }, new Response.WWErrorListener() {
             @Override
-            public void onWWErrorResponse() {
-                Toast.makeText(MainActivity.this, "Hey", Toast.LENGTH_SHORT).show();
+            public void onWWErrorResponse(WigWagError wigWagError) {
+                showMessage(Integer.toString(wigWagError.statusCode));
             }
         }).doLogin("password","ygoyal+wwdev1@wigwag.com","yash123");
-        
+
+/*
+        }).doLogin("password","ygoyal+wwdev1@wigwag.com","yash123");
+*/
+    }
+
+
+    private void showMessage(final String message){
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                Toast.makeText(MainActivity.this, message, Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 }

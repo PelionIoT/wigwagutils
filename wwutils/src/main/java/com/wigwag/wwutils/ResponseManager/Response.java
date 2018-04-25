@@ -1,4 +1,6 @@
-package com.wigwag.wwutils;
+package com.wigwag.wwutils.ResponseManager;
+
+import com.wigwag.wwutils.ErrorManager.WigWagError;
 
 public class Response<T> {
 
@@ -20,7 +22,7 @@ public class Response<T> {
          * Callback method that an error has been occurred with the
          * provided error code and optional user-readable message.
          */
-        public void onWWErrorResponse();
+        public void onWWErrorResponse(WigWagError wigWagError);
         //public void onErrorResponse(VolleyError error);
     }
 

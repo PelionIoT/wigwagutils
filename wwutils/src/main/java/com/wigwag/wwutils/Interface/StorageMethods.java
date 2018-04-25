@@ -1,4 +1,4 @@
-package com.wigwag.wwutils;
+package com.wigwag.wwutils.Interface;
 
 public abstract class StorageMethods<T> {
 

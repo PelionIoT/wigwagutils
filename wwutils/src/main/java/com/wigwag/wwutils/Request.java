@@ -1,29 +1,37 @@
 package com.wigwag.wwutils;
 
+import com.wigwag.wwutils.Database.APIContants;
+
 import org.json.JSONObject;
 
 public abstract class Request<T> implements Comparable<Request<T>> {
 
     public interface Methods {
-        int GET = 0;
-        int POST = 1;
-        int PUT = 2;
-        int DELETE = 3;
-        int HEAD = 4;
-        int OPTIONS = 5;
-        int TRACE = 6;
-        int PATCH = 7;
+        String GET = "GET";
+        String POST = "POST";
+        String PUT = "PUT";
+        String DELETE = "DELETE";
+        String PATCH = "PATCH";
     }
 
 
     public interface Types {
         int JsonRequest = 0;
+        int StringRequest = 1;
     }
 
 
     public interface Login{
-        int requestType = Methods.POST;
-        int requestMethod = Types.JsonRequest;
+        String API_URL = APIContants.LOGIN;
+        String requestMethod = Methods.POST;
+        //int requestMethod = Types.JsonRequest;
         String[] ObjectKeys = {"grant_type","username","password"};
+    }
+
+    public interface Accounts{
+        String API_URL = APIContants.ACCOUNT;
+        String requestMethod = Methods.GET;
+        //int requestMethod = Types.StringRequest;
+        String[] ObjectKeys = {};
     }
 }
