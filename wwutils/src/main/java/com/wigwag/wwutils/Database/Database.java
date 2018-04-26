@@ -34,11 +34,15 @@ public class Database {
         spfeditor.commit();
     }
 
-    public void setAccessToken(String dcs){
-        spfeditor.putString(StorageMethods.Type.ACCESS_TOKEN,dcs);
+    public void setAccessToken(String token){
+        spfeditor.putString(StorageMethods.Type.ACCESS_TOKEN,token);
         spfeditor.commit();
     }
 
+    public void setAccountId(String id){
+        spfeditor.putString(StorageMethods.Type.AccountID,id);
+        spfeditor.commit();
+    }
 
 
 }

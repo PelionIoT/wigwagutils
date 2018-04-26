@@ -60,16 +60,21 @@ public class WigWagAPI {
 
 
     public void listSites(long limit,long last){
-
+        getHttpResponse(getAccountSubPath(Request.Sites.API_URL),Request.Sites.requestMethod,getObject(Request.Sites.ObjectKeys));
     }
 
     public void getAccounts(long limit,long last){
-        getHttpResponse(APIContants.ACCOUNT,Request.Accounts.requestMethod,getObject(Request.Accounts.ObjectKeys));
+        getHttpResponse(Request.Accounts.API_URL,Request.Accounts.requestMethod,getObject(Request.Accounts.ObjectKeys));
     }
 
 
     private void requestBuilder(int requestType){
 
+    }
+
+
+    private String getAccountSubPath(String url){
+        return "/api/accounts/"+Database.getInstance(mContext).getStorage(StorageMethods.Type.AccountID)+url;
     }
 
     private JSONObject getObject(String[] keys,String... args){
@@ -88,6 +93,7 @@ public class WigWagAPI {
         CLOUD_ADDRESS = Database.getInstance(mContext).getStorage(StorageMethods.Type.DCS);
         if(CLOUD_ADDRESS!=null){
             final String baseURL = CLOUD_ADDRESS+url;
+            Log.e(TAG,"Loading URL : "+baseURL);
             okhttp3.Request request = new okhttp3.Request.Builder()
                     .addHeader("Authorization","Bearer "+Database.getInstance(mContext).getStorage(StorageMethods.Type.ACCESS_TOKEN))
                     .url(baseURL)
@@ -106,7 +112,6 @@ public class WigWagAPI {
                     if (response.isSuccessful()){
                         successListener.onWWResponse(response.body().string());
                     }else{
-                        Log.e(TAG,"Loading URL : "+baseURL);
                         errorListener.onWWErrorResponse(new WigWagError(response.code(),response.message()));
                     }
 
@@ -125,6 +130,8 @@ public class WigWagAPI {
         CLOUD_ADDRESS = Database.getInstance(mContext).getStorage(StorageMethods.Type.DCS);
         if(CLOUD_ADDRESS!=null){
             final String baseURL = CLOUD_ADDRESS+url;
+            Log.e(TAG,"Loading URL : "+baseURL);
+
             MediaType CONTENT_TYPE_JSON = MediaType.parse("application/json; charset=utf-8");
             RequestBody requestBody = RequestBody.create(CONTENT_TYPE_JSON,requestObject.toString());
 
@@ -147,7 +154,6 @@ public class WigWagAPI {
                     if (response.isSuccessful()){
                         successListener.onWWResponse(response.body().string());
                     }else{
-                        Log.e(TAG,"Loading URL : "+baseURL);
                         errorListener.onWWErrorResponse(new WigWagError(response.code(),response.message()));
                     }
 

@@ -19,7 +19,8 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        Database.getInstance(this).setDCS("https://devcloud.wigwag.io");
+        //Database.getInstance(this).setDCS("https://devcloud.wigwag.io");
+        Database.getInstance(this).setAccountId("d55fa29dbad3418883374168ba4791fd");
         WigWagAPI.getInstance(this, new Response.WWListener<String>() {
             @Override
             public void onWWResponse(final String response) {

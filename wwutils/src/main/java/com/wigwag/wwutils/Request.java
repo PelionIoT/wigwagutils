@@ -34,4 +34,11 @@ public abstract class Request<T> implements Comparable<Request<T>> {
         //int requestMethod = Types.StringRequest;
         String[] ObjectKeys = {};
     }
+
+    public interface Sites{
+        String API_URL = APIContants.SITES;
+        String requestMethod = Methods.GET;
+        //int requestMethod = Types.StringRequest;
+        String[] ObjectKeys = {};
+    }
 }
