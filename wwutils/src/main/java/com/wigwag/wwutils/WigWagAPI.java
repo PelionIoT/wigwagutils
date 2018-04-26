@@ -55,7 +55,7 @@ public class WigWagAPI {
 
 
     public void doLogin(String grantType,String username,String password){
-        getHttpResponse(Request.Login.API_URL,Request.Login.requestMethod,getObject(Request.Login.ObjectKeys, grantType, username, password));
+        postHttpResponse(Request.Login.API_URL,Request.Login.requestMethod,getObject(Request.Login.ObjectKeys, grantType, username, password));
     }
 
 
@@ -84,18 +84,14 @@ public class WigWagAPI {
         return jsonObject;
     }
 
-
     private void getHttpResponse(String url,String method,JSONObject requestObject) {
         CLOUD_ADDRESS = Database.getInstance(mContext).getStorage(StorageMethods.Type.DCS);
         if(CLOUD_ADDRESS!=null){
             final String baseURL = CLOUD_ADDRESS+url;
-            MediaType CONTENT_TYPE_JSON = MediaType.parse("application/json; charset=utf-8");
-            RequestBody requestBody = RequestBody.create(CONTENT_TYPE_JSON,requestObject.toString());
-
             okhttp3.Request request = new okhttp3.Request.Builder()
                     .addHeader("Authorization","Bearer "+Database.getInstance(mContext).getStorage(StorageMethods.Type.ACCESS_TOKEN))
-                    .post(requestBody)
                     .url(baseURL)
+                    .get()
                     .build();
 
             OkHttpClient client = new OkHttpClient();
@@ -121,4 +117,47 @@ public class WigWagAPI {
         }
 
     }
+
+
+
+
+    private void postHttpResponse(String url,String method,JSONObject requestObject) {
+        CLOUD_ADDRESS = Database.getInstance(mContext).getStorage(StorageMethods.Type.DCS);
+        if(CLOUD_ADDRESS!=null){
+            final String baseURL = CLOUD_ADDRESS+url;
+            MediaType CONTENT_TYPE_JSON = MediaType.parse("application/json; charset=utf-8");
+            RequestBody requestBody = RequestBody.create(CONTENT_TYPE_JSON,requestObject.toString());
+
+            okhttp3.Request request = new okhttp3.Request.Builder()
+                    .addHeader("Authorization","Bearer "+Database.getInstance(mContext).getStorage(StorageMethods.Type.ACCESS_TOKEN))
+                    .url(baseURL)
+                    .post(requestBody)
+                    .build();
+
+
+            OkHttpClient client = new OkHttpClient();
+            client.newCall(request).enqueue(new Callback() {
+                @Override
+                public void onFailure(Call call, IOException e) {
+                    errorListener.onWWErrorResponse(new WigWagError(WW_INTERNAL_SERVER_ERROR,e.toString()));
+                }
+
+                @Override
+                public void onResponse(Call call, final okhttp3.Response response) throws IOException {
+                    if (response.isSuccessful()){
+                        successListener.onWWResponse(response.body().string());
+                    }else{
+                        Log.e(TAG,"Loading URL : "+baseURL);
+                        errorListener.onWWErrorResponse(new WigWagError(response.code(),response.message()));
+                    }
+
+                }
+            });
+        }else{
+            errorListener.onWWErrorResponse(new WigWagError(WW_NO_CLOUD,"No Cloud Selected"));
+        }
+
+    }
+
+
 }

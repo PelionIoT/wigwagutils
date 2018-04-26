@@ -37,7 +37,7 @@ public class MainActivity extends AppCompatActivity {
             public void onWWErrorResponse(WigWagError wigWagError) {
                 showMessage(Integer.toString(wigWagError.statusCode));
             }
-        }).doLogin("password","ygoyal+wwdev1@wigwag.com","yash123");
+        }).getAccounts(0,0);
 
 /*
         }).doLogin("password","ygoyal+wwdev1@wigwag.com","yash123");
